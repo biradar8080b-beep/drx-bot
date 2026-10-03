@@ -43,12 +43,30 @@ jobs:
         run: |
           echo "{\"token\":\"$BOT_TOKEN\",\"admin\":\"$ADMIN_ID\"}" > config.json
 
-            - name: Start API and Bot
+                  - name: Start API and Bot
         run: |
           nohup python3 api.py > api_logs.txt 2>&1 &
           sleep 3
           nohup python3 drx.py > bot_logs.txt 2>&1 &
           sleep 3
+          echo "=========================================="
+          echo "=== API LOGS ==="
+          echo "=========================================="
+          cat api_logs.txt || echo "api_logs.txt missing"
+          echo "=========================================="
+          echo "=== BOT LOGS ==="
+          echo "=========================================="
+          cat bot_logs.txt || echo "bot_logs.txt missing"
+          echo "=========================================="
+          echo "=== RUNNING PROCESSES ==="
+          echo "=========================================="
+          ps aux | grep -E "api.py|drx.py" | grep -v grep
+          echo "=========================================="
+          echo "=== DRX BINARY ==="
+          echo "=========================================="
+          ls -la drx 2>/dev/null || echo "drx binary missing"
+          file drx 2>/dev/null || echo "cannot inspect drx"
+
           echo "=== API LOGS ==="
           cat api_logs.txt
           echo "=== BOT LOGS ==="
