@@ -264,6 +264,11 @@ def attack2(m):
 
 
 
+@bot.message_handler(commands=['attack'])
+def attack_alias(m):
+    attack2(m)
+
+
 @bot.message_handler(commands=['myinfo'])
 def myinfo(m):
     users = load_data(USERS_FILE)
