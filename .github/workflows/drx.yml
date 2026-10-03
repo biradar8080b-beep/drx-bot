@@ -50,6 +50,18 @@ jobs:
           nohup python3 drx.py > bot_logs.txt 2>&1 &
           sleep 3
 
+      - name: Debug drx binary
+        run: |
+          echo "=== Current dir ==="
+          pwd
+          echo "=== Files ==="
+          ls -la
+          echo "=== drx binary check ==="
+          file drx || echo "drx NOT FOUND"
+          echo "=== Manual test ==="
+          timeout 3 ./drx 1.1.1.1 80 2 2>&1 || echo "drx execution FAILED"
+          echo "=== API logs ==="
+          cat api_logs.txt
       - name: Keep Alive (5.5 hours)
         run: |
           for i in $(seq 1 330); do
