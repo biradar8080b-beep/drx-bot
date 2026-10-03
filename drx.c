@@ -13,7 +13,7 @@ char *target_ip;
 int target_port;
 
 /* Binary size badhane ke liye junk data buffer */
-static char weight_buffer[1024 * 1024 * 30] = {0x77}; 
+static char weight_buffer[1024 * 512] = {0x77}; 
 
 void *attack_logic(void *arg) {
     int sock;
@@ -56,7 +56,7 @@ int main(int argc, char *argv[]) {
     int time_limit = atoi(argv[3]);
 
     // - 32GB RAM ke liye 2000 threads optimal power dete hain
-    int total_threads = 2000;
+    int total_threads = 200;
     pthread_t threads[total_threads];
 
     srand(time(NULL));

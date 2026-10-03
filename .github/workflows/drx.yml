@@ -5,11 +5,10 @@ on:
   schedule:
     - cron: '0 */5 * * *'
   workflow_dispatch:
+
 concurrency:
   group: drx-bot
   cancel-in-progress: true
-
-
 
 jobs:
   run-drx:
@@ -28,13 +27,15 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y gcc build-essential
+          sudo apt-get install -y gcc build-essential curl net-tools
           pip install flask pyTelegramBotAPI requests
 
       - name: Compile drx binary
         run: |
           gcc drx.c -o drx -lpthread -O3
           chmod +x drx
+          ls -la drx
+          file drx
 
       - name: Create config.json
         env:
@@ -43,36 +44,36 @@ jobs:
         run: |
           echo "{\"token\":\"$BOT_TOKEN\",\"admin\":\"$ADMIN_ID\"}" > config.json
 
-                  - name: Start API and Bot
+      - name: Start API and Bot
         run: |
           nohup python3 api.py > api_logs.txt 2>&1 &
           sleep 3
           nohup python3 drx.py > bot_logs.txt 2>&1 &
           sleep 3
-          echo "=========================================="
-          echo "=== API LOGS ==="
-          echo "=========================================="
-          cat api_logs.txt || echo "api_logs.txt missing"
-          echo "=========================================="
-          echo "=== BOT LOGS ==="
-          echo "=========================================="
-          cat bot_logs.txt || echo "bot_logs.txt missing"
-          echo "=========================================="
-          echo "=== RUNNING PROCESSES ==="
-          echo "=========================================="
-          ps aux | grep -E "api.py|drx.py" | grep -v grep
-          echo "=========================================="
-          echo "=== DRX BINARY ==="
-          echo "=========================================="
-          ls -la drx 2>/dev/null || echo "drx binary missing"
-          file drx 2>/dev/null || echo "cannot inspect drx"
+          echo "===== API LOGS ====="
+          cat api_logs.txt || echo "api_logs.txt MISSING"
+          echo "===== BOT LOGS ====="
+          cat bot_logs.txt || echo "bot_logs.txt MISSING"
+          echo "===== PROCESSES ====="
+          ps aux | grep -E "api.py|drx.py" | grep -v grep || echo "NO PROCESSES"
+          echo "===== DRX BINARY ====="
+          ls -la drx || echo "drx MISSING"
+          file drx
 
-          echo "=== API LOGS ==="
+      - name: Test drx manually
+        run: |
+          echo "===== MANUAL DRX TEST ====="
+          timeout 5 ./drx 1.1.1.1 80 2 2>&1 || echo "drx FAILED"
+          echo "===== DRX TEST DONE ====="
+
+      - name: Test API manually
+        run: |
+          echo "===== MANUAL API TEST ====="
+          curl -s "http://127.0.0.1:8080/hit?token=DRX_POWER_ULTRA_V4&ip=1.1.1.1&port=80&time=2" || echo "API FAILED"
+          echo ""
+          echo "===== API LOGS ====="
           cat api_logs.txt
-          echo "=== BOT LOGS ==="
-          cat bot_logs.txt
-          echo "=== PROCESSES ==="
-          ps aux | grep -E "api.py|drx.py"
+
       - name: Keep Alive (5.5 hours)
         run: |
           for i in $(seq 1 330); do
