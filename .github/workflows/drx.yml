@@ -1,0 +1,58 @@
+name: DRX Bot
+
+on:
+  push:
+  schedule:
+    - cron: '0 */5 * * *'
+  workflow_dispatch:
+
+jobs:
+  run-drx:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc build-essential
+          pip install flask pyTelegramBotAPI requests
+
+      - name: Compile drx binary
+        run: |
+          gcc drx.c -o drx -lpthread -O3
+          chmod +x drx
+
+      - name: Create config.json
+        env:
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+          ADMIN_ID: ${{ secrets.ADMIN_ID }}
+        run: |
+          echo "{\"token\":\"$BOT_TOKEN\",\"admin\":\"$ADMIN_ID\"}" > config.json
+
+      - name: Start API and Bot
+        run: |
+          nohup python3 api.py > api_logs.txt 2>&1 &
+          sleep 3
+          nohup python3 drx.py > bot_logs.txt 2>&1 &
+          sleep 3
+
+      - name: Keep Alive (5.5 hours)
+        run: |
+          for i in $(seq 1 330); do
+            if ! pgrep -f api.py > /dev/null; then
+              nohup python3 api.py > api_logs.txt 2>&1 &
+            fi
+            if ! pgrep -f drx.py > /dev/null; then
+              nohup python3 drx.py > bot_logs.txt 2>&1 &
+            fi
+            sleep 60
+          done
